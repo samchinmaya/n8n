@@ -1,6 +1,6 @@
 {
   "name": "n8n",
-  "module": "index.ts",
+  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -11,12 +11,16 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "arktype": "^2.2.6",
+    "arktype": "^2.2.7",
     "better-auth": "^1.7.7",
     "bullmq": "^6.3.11",
     "drizzle-orm": "^0.45.3",
     "elysia": "^1.4.30",
-    "ioredis": "^6.0.0",
     "pg": "^8.23.1"
+  },
+  "scripts": {
+    "db:migrate": "drizzle-kit migrate",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
   }
 }
