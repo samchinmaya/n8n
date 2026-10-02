@@ -14,10 +14,11 @@ export const triggerMode = pgEnum("trigger_mode", ["manual", "webhook", "cron"])
 //
 export const execution = pgTable("executions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  workflowId: uuid("workflow_id").references(() => workflow.id, { onDelete: "cascade" }),
+  workflowId: uuid("workflow_id").notNull().references(() => workflow.id, { onDelete: "cascade" }),
   status: executionStatus("status").notNull().default("pending"),
   mode: triggerMode("mode").notNull(),
   data: jsonb("data").$type<Record<string, unknown>>(),
+  error: text("error"),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  finishedAt: timestamp('finished_at').notNull(),
+  finishedAt: timestamp('finished_at'),
 })
