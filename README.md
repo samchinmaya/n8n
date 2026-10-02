@@ -40,6 +40,7 @@ You connect **nodes** (boxes) with **edges** (arrows) on a canvas. A **trigger**
 | Queue | [BullMQ](https://bullmq.io) + Redis |
 | Auth | [better-auth](https://www.better-auth.com) |
 | Frontend (planned) | React + [React Flow](https://reactflow.dev) |
+| Deployment (planned) | Docker Compose on AWS EC2, Caddy, GitHub Actions |
 
 ---
 
@@ -208,6 +209,7 @@ docker compose up -d
 - [ ] **Day 5: Auth + credentials.** better-auth, encrypted API keys, per-user data
 - [ ] **Day 6: Frontend part 1.** React Flow editor, workflow list, save and load
 - [ ] **Day 7: Frontend part 2.** Node settings, run button, executions page, If node
+- [ ] **Day 8: Deploy.** Docker, AWS EC2, Caddy (HTTPS), GitHub Actions CI/CD
 
 ---
 
