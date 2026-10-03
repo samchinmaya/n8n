@@ -141,13 +141,21 @@ n8n/
 │   │       └── index.ts      # re-exports all tables
 │   ├── types/
 │   │   └── workflow.ts       # ArkType: WorkflowNode, WorkflowEdge
-│   └── index.ts              # app entry
+│   ├── nodes/
+│   │   ├── types.ts          # NodeContext + NodeDefinition (the shape every node follows)
+│   │   ├── manualTrigger.ts  # starts a workflow
+│   │   ├── httpRequest.ts    # calls a URL and returns the JSON response
+│   │   ├── set.ts            # adds or replaces one field in the data
+│   │   └── index.ts          # node registry: type name → node code
+│   ├── engine/
+│   │   └── runWorkFlow.ts    # runs a workflow: trigger → follow edges → pass data along
+│   └── index.ts              # sample workflow for testing the engine
 ├── drizzle/                  # generated SQL migrations
 ├── drizzle.config.ts
 └── docker-compose.yml        # Redis
 ```
 
-Planned: `src/nodes/`, `src/engine/`, `src/routes/`, `src/queue/`, `src/auth/`, `src/lib/` and `src/web/`.
+Planned: `src/routes/`, `src/queue/`, `src/auth/`, `src/lib/` and `src/web/`.
 
 ---
 
@@ -197,13 +205,14 @@ docker compose up -d
 | `bun run db:generate` | create a SQL migration from schema changes |
 | `bun run db:migrate` | apply migrations to the database |
 | `bun run db:studio` | open Drizzle Studio to browse tables |
+| `bun run src/index.ts` | run the sample workflow through the engine and print each node's output |
 
 ---
 
 ## 🗺 Roadmap
 
 - [x] **Day 1: Database.** Schema, ArkType types, first migration
-- [ ] **Day 2: Nodes + engine.** Node interface, first nodes, the workflow runner
+- [x] **Day 2: Nodes + engine.** Node interface, first nodes (Manual Trigger, HTTP Request, Set), node registry, the workflow runner
 - [ ] **Day 3: API.** Elysia routes for workflows and executions, Swagger docs, consistent API responses and errors
 - [ ] **Day 4: Queue + triggers.** BullMQ worker, webhook and cron triggers
 - [ ] **Day 5: Auth + credentials.** better-auth, encrypted API keys, per-user data
