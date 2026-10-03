@@ -4,16 +4,23 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
-import { ApiResponse } from "../lib/ApiResponse.ts";
+import { apiResponse } from "../lib/ApiResponse.ts";
 
 const TEST_USER_ID = "test-user"; // until real login on Day 5
 
 const CreateWorkFlowBody = type({
-  name: "string",
+  name: "string>0",
   "nodes?": WorkflowNode.array(),
   "edges?": WorkflowEdge.array(),
 })
-export const workflowRoutes = new Elysia()
+export const workflowRoutes = new Elysia({ prefix: "/workflows" })
+  .get("/", async () => {
+    const workflows = await db
+      .select()
+      .from(workflow)
+      .where(eq(workflow.userId, TEST_USER_ID))
+    return apiResponse(200, workflows, "Workflows retrieved successfully");
+  })
   .post("/",
     async ({ body, set }) => {
       const [created] = await db
@@ -26,7 +33,7 @@ export const workflowRoutes = new Elysia()
         })
         .returning();
       set.status = 201;
-      return new ApiResponse(201, created, "Workflow created successfully");
+      return apiResponse(201, created, "Workflow created successfully");
     },
     { body: CreateWorkFlowBody }
   )
