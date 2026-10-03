@@ -21,6 +21,7 @@
   "scripts": {
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "dev": "bun run --watch src/index.ts"
   }
 }
