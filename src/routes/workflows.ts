@@ -16,6 +16,7 @@ const CreateWorkFlowBody = type({
 })
 
 const UpdateWorkFlowBody = type({
+  "+":"delete",
   "name?": "string>0",
   "nodes?": WorkflowNode.array(),
   "edges?": WorkflowEdge.array(),

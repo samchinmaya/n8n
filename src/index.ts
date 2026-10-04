@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { workflowRoutes } from "./routes/workflows";
-import { apiError } from "./lib/ApiError";
 import { openapi } from "@elysia/openapi";
+
 
 
 const app = new Elysia()
