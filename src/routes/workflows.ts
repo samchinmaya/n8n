@@ -5,6 +5,7 @@ import { db } from "../db/index.ts";
 import { workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { apiError } from "../lib/ApiError.ts";
+import { runWorkFlow } from "../engine/runWorkFlow.ts";
 
 const TEST_USER_ID = "test-user"; // until real login on Day 5
 
@@ -57,6 +58,35 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
     },
     { params: type({ id: "string.uuid" }), body: UpdateWorkFlowBody }
 
+  )
+  .delete("/:id",
+    async ({ params, set }) => {
+      const [deleted] = await db
+        .delete(workflow)
+        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
+        .returning();
+      if (!deleted) {
+        set.status = 404;
+        return apiError("Workflow not found", 404);
+      }
+      return deleted;
+    },
+    { params: type({ id: "string.uuid" }) }
+  )
+  .post("/:id/run",
+    async ({ params, set }) => {
+      const [found] = await db
+        .select()
+        .from(workflow)
+        .where(eq(workflow.id, params.id))
+        .limit(1);
+      if (!found) {
+        set.status = 404;
+        return apiError("Workflow not found", 404);
+      }
+
+    },
+    { params: type({ id: "string.uuid" }) }
   )
   .post("/",
     async ({ body, set }) => {
