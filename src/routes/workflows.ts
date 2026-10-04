@@ -13,6 +13,13 @@ const CreateWorkFlowBody = type({
   "nodes?": WorkflowNode.array(),
   "edges?": WorkflowEdge.array(),
 })
+
+const UpdateWorkFlowBody = type({
+  "name?": "string>0",
+  "nodes?": WorkflowNode.array(),
+  "edges?": WorkflowEdge.array(),
+  "active?": "boolean",
+})
 export const workflowRoutes = new Elysia({ prefix: "/workflows" })
   .get("/", async () => {
     const workflows = await db
@@ -34,6 +41,22 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       return found;
     },
     { params: type({ id: "string.uuid" }) }
+  )
+  .patch("/:id",
+    async ({ params, body, set }) => {
+      const [updated] = await db
+        .update(workflow)
+        .set({ ...body, updatedAt: new Date() })
+        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
+        .returning();
+      if (!updated) {
+        set.status = 404;
+        return apiError("Workflow not found", 404);
+      }
+      return updated;
+    },
+    { params: type({ id: "string.uuid" }), body: UpdateWorkFlowBody }
+
   )
   .post("/",
     async ({ body, set }) => {
