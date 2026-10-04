@@ -78,13 +78,14 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       const [found] = await db
         .select()
         .from(workflow)
-        .where(eq(workflow.id, params.id))
+        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
         .limit(1);
       if (!found) {
         set.status = 404;
         return apiError("Workflow not found", 404);
       }
-
+      const result = await runWorkFlow(found.nodes, found.edges)
+      return result;
     },
     { params: type({ id: "string.uuid" }) }
   )
