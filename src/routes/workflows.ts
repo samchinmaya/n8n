@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { type } from "arktype";
-import { eq } from "drizzle-orm";
+import { and,eq } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
@@ -21,6 +21,20 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       .where(eq(workflow.userId, TEST_USER_ID))
     return workflows;
   })
+  .get("/:id",
+    async ({ params, set }) => {
+      const [found] = await db
+        .select()
+        .from(workflow)
+        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
+      if (!found) {
+        set.status = 404;
+        return apiError("Workflow not found", 404);
+      }
+      return found;
+    },
+    { params: type({ id: "string.uuid" }) }
+  )
   .post("/",
     async ({ body, set }) => {
       const [created] = await db
