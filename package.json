@@ -11,6 +11,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@elysia/openapi": "^1.4.16",
     "arktype": "^2.2.7",
     "better-auth": "^1.7.7",
     "bullmq": "^6.3.11",

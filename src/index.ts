@@ -1,9 +1,11 @@
 import { Elysia } from "elysia";
 import { workflowRoutes } from "./routes/workflows";
 import { apiError } from "./lib/ApiError";
+import { openapi } from "@elysia/openapi";
 
 
 const app = new Elysia()
+  .use(openapi())
   .get('/health', () => ({ status: "ok" }))
   .use(workflowRoutes)
   .listen(Number(process.env.PORT)||3000);
