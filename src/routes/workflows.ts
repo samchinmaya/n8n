@@ -73,7 +73,7 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       return deleted;
     },
     { params: type({ id: "string.uuid" }) }
-  )
+)
   .post("/:id/run",
     async ({ params, set }) => {
       const [found] = await db
@@ -89,7 +89,7 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       return result;
     },
     { params: type({ id: "string.uuid" }) }
-  )
+)
   .post("/",
     async ({ body, set }) => {
       const [created] = await db
