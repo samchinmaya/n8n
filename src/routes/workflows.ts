@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import { type } from "arktype";
 import { and,eq } from "drizzle-orm";
 import { db } from "../db/index.ts";
-import { workflow } from "../db/schema/index.ts";
+import { execution, workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { apiError } from "../lib/ApiError.ts";
 import { runWorkFlow } from "../engine/runWorkFlow.ts";
@@ -85,8 +85,6 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
         set.status = 404;
         return apiError("Workflow not found", 404);
       }
-      const result = await runWorkFlow(found.nodes, found.edges)
-      return result;
     },
     { params: type({ id: "string.uuid" }) }
 )
