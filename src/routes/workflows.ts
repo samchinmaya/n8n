@@ -73,7 +73,7 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       return deleted;
     },
     { params: type({ id: "string.uuid" }) }
-)
+  )
   .post("/:id/run",
     async ({ params, set }) => {
       const [found] = await db
@@ -85,6 +85,22 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
         set.status = 404;
         return apiError("Workflow not found", 404);
       }
+      const [created] = await db
+        .insert(execution)
+        .values({
+          workflowId: found.id,
+          mode:"manual",
+        })
+        .returning()//gives the returning values
+      if (!created) {
+        set.status = 500;
+        return apiError("Could not create execution",500)
+      }
+      await db
+        .update(execution)
+        .set({ status: "running" })
+        .where(eq(execution.id, created.id));
+      return created
     },
     { params: type({ id: "string.uuid" }) }
 )
