@@ -19,7 +19,6 @@ You connect **nodes** (boxes) with **edges** (arrows) on a canvas. A **trigger**
 - 🧩 **Visual editor:** drag nodes and connect them on a canvas (React Flow)
 - ⚡ **Triggers:** manual run, webhook URL, cron schedule
 - 🌐 **Nodes:** HTTP Request, Set, If, Telegram, Email, and more
-- 🔁 **Background runs:** a queue and workers (BullMQ + Redis)
 - 📜 **Execution history:** status, per-node output and errors for every run
 - 🔐 **Credentials:** API keys stored encrypted
 - 👤 **Auth:** email/password login (better-auth)
@@ -37,7 +36,6 @@ You connect **nodes** (boxes) with **edges** (arrows) on a canvas. A **trigger**
 | Database | PostgreSQL ([Neon](https://neon.tech)) |
 | ORM / migrations | [Drizzle ORM](https://orm.drizzle.team) + drizzle-kit |
 | Validation | [ArkType](https://arktype.io) |
-| Queue | [BullMQ](https://bullmq.io) + Redis |
 | Auth | [better-auth](https://www.better-auth.com) |
 | Frontend (planned) | React + [React Flow](https://reactflow.dev) |
 | Deployment (planned) | Docker Compose on AWS EC2, Caddy, GitHub Actions |
@@ -151,11 +149,10 @@ n8n/
 │   │   └── runWorkFlow.ts    # runs a workflow: trigger → follow edges → pass data along
 │   └── index.ts              # sample workflow for testing the engine
 ├── drizzle/                  # generated SQL migrations
-├── drizzle.config.ts
-└── docker-compose.yml        # Redis
+└── drizzle.config.ts
 ```
 
-Planned: `src/routes/`, `src/queue/`, `src/auth/`, `src/lib/` and `src/web/`.
+Planned: `src/routes/`, `src/auth/`, `src/lib/` and `src/web/`.
 
 ---
 
@@ -164,7 +161,6 @@ Planned: `src/routes/`, `src/queue/`, `src/auth/`, `src/lib/` and `src/web/`.
 ### Prerequisites
 - [Bun](https://bun.com) v1.3+
 - A PostgreSQL database (for example a free [Neon](https://neon.tech) project)
-- [Docker](https://www.docker.com) (for Redis, needed from the queue step onward)
 
 ### 1. Clone and install
 ```bash
@@ -191,11 +187,6 @@ bun run db:studio
 ```
 Then open https://local.drizzle.studio. Safari and Brave block it by default, so use Chrome/Firefox or turn off Brave Shields for that site.
 
-### 5. Start Redis (needed from Day 4)
-```bash
-docker compose up -d
-```
-
 ---
 
 ## 📜 Scripts
@@ -214,7 +205,7 @@ docker compose up -d
 - [x] **Day 1: Database.** Schema, ArkType types, first migration
 - [x] **Day 2: Nodes + engine.** Node interface, first nodes (Manual Trigger, HTTP Request, Set), node registry, the workflow runner
 - [ ] **Day 3: API.** Elysia routes for workflows and executions, Swagger docs, consistent API responses and errors
-- [ ] **Day 4: Queue + triggers.** BullMQ worker, webhook and cron triggers
+- [ ] **Day 4: Triggers.** Webhook and cron triggers
 - [ ] **Day 5: Auth + credentials.** better-auth, encrypted API keys, per-user data
 - [ ] **Day 6: Frontend part 1.** React Flow editor, workflow list, save and load
 - [ ] **Day 7: Frontend part 2.** Node settings, run button, executions page, If node
