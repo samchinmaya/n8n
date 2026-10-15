@@ -100,7 +100,25 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
         .update(execution)
         .set({ status: "running" })
         .where(eq(execution.id, created.id));
-      return created
+      try {
+        const value = await runWorkFlow(found.nodes, found.edges);
+        const [done] = await db.update(execution)
+          .set({status:"completed",data:value,finishedAt:new Date()} )
+          .where(eq(execution.id,created.id))
+          .returning()
+        return done;
+      } catch (err) {
+          const [failed] = await db
+            .update(execution)
+            .set({
+              status: "failed",
+              error: err instanceof Error ? err.message : String(err),
+              finishedAt: new Date()
+            })
+            .where(eq(execution.id,created.id))
+            .returning();
+          return failed
+      }
     },
     { params: type({ id: "string.uuid" }) }
 )
