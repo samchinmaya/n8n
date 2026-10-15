@@ -1,11 +1,13 @@
 import { Elysia } from "elysia";
 import { type } from "arktype";
-import { and,eq } from "drizzle-orm";
+import { and,eq,desc } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { execution, workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { apiError } from "../lib/ApiError.ts";
 import { runWorkFlow } from "../engine/runWorkFlow.ts";
+import type { SHA512_256 } from "bun";
+import { GelDbTransaction } from "drizzle-orm/gel";
 
 const TEST_USER_ID = "test-user"; // until real login on Day 5
 
@@ -121,7 +123,7 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       }
     },
     { params: type({ id: "string.uuid" }) }
-)
+  )
   .post("/",
     async ({ body, set }) => {
       const [created] = await db
@@ -138,3 +140,22 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
     },
     { body: CreateWorkFlowBody }
   )
+  .get('/:id/executions', async ({params,set }) => {
+    const [found] = await db
+      .select()
+      .from(workflow)
+      .where(and(eq(workflow.userId,TEST_USER_ID),eq(workflow.id,params.id)))
+      .limit(1)
+    if (!found) {
+      set.status = 404;
+      return apiError("Workflow not found",404)
+    }
+    const executions = await db
+      .select()
+      .from(execution)
+      .where(eq(execution.workflowId,found.id))
+      .orderBy(desc(execution.createdAt))
+    return executions;
+
+
+  }, { params: type({ id: "string.uuid" }) })
