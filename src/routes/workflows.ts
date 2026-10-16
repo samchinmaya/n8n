@@ -6,7 +6,7 @@ import { execution, workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { apiError } from "../lib/ApiError.ts";
 import { runWorkFlow } from "../engine/runWorkFlow.ts";
-
+import { startExecution } from "../engine/startExecution.ts";
 const TEST_USER_ID = "test-user"; // until real login on Day 5
 
 const CreateWorkFlowBody = type({
@@ -85,40 +85,8 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
         set.status = 404;
         return apiError("Workflow not found", 404);
       }
-      const [created] = await db
-        .insert(execution)
-        .values({
-          workflowId: found.id,
-          mode:"manual",
-        })
-        .returning()//gives the returning values
-      if (!created) {
-        set.status = 500;
-        return apiError("Could not create execution",500)
-      }
-      await db
-        .update(execution)
-        .set({ status: "running" })
-        .where(eq(execution.id, created.id));
-      try {
-        const value = await runWorkFlow(found.nodes, found.edges);
-        const [done] = await db.update(execution)
-          .set({status:"completed",data:value,finishedAt:new Date()} )
-          .where(eq(execution.id,created.id))
-          .returning()
-        return done;
-      } catch (err) {
-          const [failed] = await db
-            .update(execution)
-            .set({
-              status: "failed",
-              error: err instanceof Error ? err.message : String(err),
-              finishedAt: new Date()
-            })
-            .where(eq(execution.id,created.id))
-            .returning();
-          return failed
-      }
+      const result = await startExecution(found as any, "manual");
+      return result;
     },
     { params: type({ id: "string.uuid" }) }
   )
@@ -157,3 +125,4 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
 
 
   }, { params: type({ id: "string.uuid" }) })
+

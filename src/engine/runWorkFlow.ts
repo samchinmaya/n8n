@@ -1,8 +1,8 @@
 import type { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { nodeRegistry } from "../nodes/index.ts";
-export async function runWorkFlow(nodes: WorkflowNode[], edges: WorkflowEdge[]) {
+export async function runWorkFlow(nodes: WorkflowNode[], edges: WorkflowEdge[], triggerInput?: unknown) {
   const outputs: Record<string, unknown> = {}; // will hold the output of each node
-  let input: unknown = undefined; // what we pasws to the next node
+  let input: unknown = triggerInput; // what we pass to the next node
   let current = nodes.find((n) => nodeRegistry[n.type]?.isTrigger); // find the trigger mode and hold that node
   if (!current) throw new Error("No Trigger Node found");
   while (current) {
