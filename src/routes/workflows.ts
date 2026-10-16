@@ -6,8 +6,6 @@ import { execution, workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { apiError } from "../lib/ApiError.ts";
 import { runWorkFlow } from "../engine/runWorkFlow.ts";
-import type { SHA512_256 } from "bun";
-import { GelDbTransaction } from "drizzle-orm/gel";
 
 const TEST_USER_ID = "test-user"; // until real login on Day 5
 
@@ -154,7 +152,7 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       .select()
       .from(execution)
       .where(eq(execution.workflowId,found.id))
-      .orderBy(desc(execution.createdAt))
+      .orderBy(desc(execution.createdAt))//newest in the top
     return executions;
 
 
