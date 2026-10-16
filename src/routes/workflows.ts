@@ -122,7 +122,26 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       .where(eq(execution.workflowId,found.id))
       .orderBy(desc(execution.createdAt))//newest in the top
     return executions;
-
-
   }, { params: type({ id: "string.uuid" }) })
+
+  .post("/:id/webhook",
+    async ({ params, body, set }) => {
+      const [found] = await db
+        .select()
+        .from(workflow)
+        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
+        .limit(1);
+      if (!found) {
+        set.status = 404;
+        return apiError("Workflow not found", 404);
+      }
+      if (!found.active) {
+        set.status = 403;
+        return apiError("Workflow is not active", 403);
+      }
+      const result = await startExecution(found as any, "webhook", body);
+      return result;
+    },
+    { params: type({ id: "string.uuid" }), body: type("object") }
+  )
 
