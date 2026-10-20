@@ -6,6 +6,7 @@ import { execution, workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { apiError } from "../lib/ApiError.ts";
 import { startExecution } from "../engine/startExecution.ts";
+import { scheduleWorkflow, unscheduleWorkflow } from "../engine/cronManager.ts";
 const TEST_USER_ID = "test-user"; // until real login on Day 5
 
 
@@ -58,6 +59,11 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
         set.status = 404;
         return apiError("Workflow not found", 404);
       }
+      if (updated.active) {
+        scheduleWorkflow(updated)
+      } else {
+        unscheduleWorkflow(updated.id)
+      }
       return updated;
     },
     { params: type({ id: "string.uuid" }), body: UpdateWorkFlowBody }
@@ -73,6 +79,7 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
         set.status = 404;
         return apiError("Workflow not found", 404);
       }
+      unscheduleWorkflow(deleted.id)
       return deleted;
     },
     { params: type({ id: "string.uuid" }) }
@@ -147,5 +154,3 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
     }
     return result;
   },{params:type({id:"string.uuid"}),body:type("object")})
-
-  .patch('/:id/cron')
