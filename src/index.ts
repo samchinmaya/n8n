@@ -5,8 +5,9 @@ import { openapi } from "@elysia/openapi";
 import { loadSchedules } from "./engine/cronManager";
 
 
-
+import { auth } from "./auth";
 const app = new Elysia()
+  .mount(auth.handler)
   .use(openapi())
   .get('/health', () => ({ status: "ok" }))
   .use(executionRoutes)
