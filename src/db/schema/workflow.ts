@@ -8,7 +8,7 @@ export const workflow = pgTable("workflows", {
   name: text("name").notNull(),
   nodes: jsonb("nodes").$type<WorkflowNode[]>().notNull().default([]),
   edges: jsonb("edges").$type<WorkflowEdge[]>().notNull().default([]),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at",{withTimezone:true}).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at",{withTimezone:true}).notNull().defaultNow(),
   active: boolean("active").notNull().default(false),
 });
