@@ -19,6 +19,6 @@ export const execution = pgTable("executions", {
   mode: triggerMode("mode").notNull(),
   data: jsonb("data").$type<Record<string, unknown>>(),
   error: text("error"),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  finishedAt: timestamp('finished_at'),
+  createdAt: timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
+  finishedAt: timestamp('finished_at',{withTimezone:true}),
 })
