@@ -3,11 +3,9 @@ import { workflowRoutes } from "./routes/workflows";
 import { executionRoutes } from "./routes/executions";
 import { openapi } from "@elysia/openapi";
 import { loadSchedules } from "./engine/cronManager";
-
-
-import { auth } from "./auth";
+import { authPlugin } from "./auth/plugin";
 const app = new Elysia()
-  .mount(auth.handler)
+  .use(authPlugin)
   .use(openapi())
   .get('/health', () => ({ status: "ok" }))
   .use(executionRoutes)
