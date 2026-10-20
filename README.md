@@ -140,19 +140,30 @@ n8n/
 │   ├── types/
 │   │   └── workflow.ts       # ArkType: WorkflowNode, WorkflowEdge
 │   ├── nodes/
-│   │   ├── types.ts          # NodeContext + NodeDefinition (the shape every node follows)
-│   │   ├── manualTrigger.ts  # starts a workflow
-│   │   ├── httpRequest.ts    # calls a URL and returns the JSON response
-│   │   ├── set.ts            # adds or replaces one field in the data
-│   │   └── index.ts          # node registry: type name → node code
+│   │   ├── types.ts           # NodeContext + NodeDefinition (the shape every node follows)
+│   │   ├── manualTrigger.ts   # starts a workflow by hand (/run) or from a webhook
+│   │   ├── scheduleTrigger.ts # starts a workflow on a cron schedule
+│   │   ├── httpRequest.ts     # calls a URL and returns the JSON response
+│   │   ├── set.ts             # adds or replaces one field in the data
+│   │   └── index.ts           # node registry: type name → node code
 │   ├── engine/
-│   │   └── runWorkFlow.ts    # runs a workflow: trigger → follow edges → pass data along
-│   └── index.ts              # sample workflow for testing the engine
+│   │   ├── runWorkFlow.ts     # runs a workflow: trigger → follow edges → pass data along
+│   │   ├── startExecution.ts  # creates an execution row, runs the workflow, saves completed/failed
+│   │   └── cronManager.ts     # starts/stops cron jobs for active workflows
+│   ├── routes/
+│   │   ├── workflows.ts       # workflow CRUD, run, webhook, executions per workflow
+│   │   └── executions.ts      # latest executions, one execution by id
+│   ├── lib/
+│   │   ├── ApiError.ts        # consistent JSON error responses
+│   │   └── ApiResponse.ts
+│   ├── scripts/
+│   │   └── sampleWorkflow.ts  # runs a sample workflow through the engine
+│   └── index.ts               # Elysia server: mounts routes, Swagger, loads cron schedules
 ├── drizzle/                  # generated SQL migrations
 └── drizzle.config.ts
 ```
 
-Planned: `src/routes/`, `src/auth/`, `src/lib/` and `src/web/`.
+Planned: `src/auth/` and `src/web/`.
 
 ---
 
@@ -173,6 +184,7 @@ bun install
 Create a `.env` file in the project root:
 ```env
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+PORT=3000
 ```
 Bun loads `.env` automatically.
 
@@ -196,7 +208,37 @@ Then open https://local.drizzle.studio. Safari and Brave block it by default, so
 | `bun run db:generate` | create a SQL migration from schema changes |
 | `bun run db:migrate` | apply migrations to the database |
 | `bun run db:studio` | open Drizzle Studio to browse tables |
-| `bun run src/index.ts` | run the sample workflow through the engine and print each node's output |
+| `bun run dev` | start the API server with auto-reload (http://localhost:3000) |
+| `bun run src/scripts/sampleWorkflow.ts` | run the sample workflow through the engine and print each node's output |
+
+---
+
+## 🔌 API
+
+Interactive docs (Swagger): **http://localhost:3000/openapi**
+
+| Method | Route | What it does |
+|---|---|---|
+| `GET` | `/health` | health check |
+| `GET` | `/workflows` | list workflows |
+| `POST` | `/workflows` | create a workflow |
+| `GET` | `/workflows/:id` | get one workflow |
+| `PATCH` | `/workflows/:id` | update a workflow (setting `active` starts/stops its cron schedule) |
+| `DELETE` | `/workflows/:id` | delete a workflow |
+| `POST` | `/workflows/:id/run` | run a workflow now and return the execution |
+| `POST` | `/workflows/:id/webhook` | run an active workflow; the request body becomes the trigger's input |
+| `GET` | `/workflows/:id/executions` | a workflow's runs, newest first |
+| `GET` | `/executions` | the latest 20 runs |
+| `GET` | `/executions/:id` | one run: status, each node's output, error |
+
+Every run is saved in `executions` with its trigger mode (`manual`, `webhook`, `cron`), status, per-node output and error.
+
+### Cron schedules
+Start a workflow with a `scheduleTrigger` node whose `params.cron` is a cron expression, then set the workflow to `active: true`:
+```json
+{ "id": "1", "type": "scheduleTrigger", "name": "Every minute", "position": { "x": 0, "y": 0 }, "params": { "cron": "*/1 * * * *" } }
+```
+Active schedules are reloaded when the server starts.
 
 ---
 
@@ -204,8 +246,8 @@ Then open https://local.drizzle.studio. Safari and Brave block it by default, so
 
 - [x] **Day 1: Database.** Schema, ArkType types, first migration
 - [x] **Day 2: Nodes + engine.** Node interface, first nodes (Manual Trigger, HTTP Request, Set), node registry, the workflow runner
-- [ ] **Day 3: API.** Elysia routes for workflows and executions, Swagger docs, consistent API responses and errors
-- [ ] **Day 4: Triggers.** Webhook and cron triggers
+- [x] **Day 3: API.** Elysia routes for workflows and executions, Swagger docs, consistent API responses and errors
+- [x] **Day 4: Triggers.** Webhook and cron triggers
 - [ ] **Day 5: Auth + credentials.** better-auth, encrypted API keys, per-user data
 - [ ] **Day 6: Frontend part 1.** React Flow editor, workflow list, save and load
 - [ ] **Day 7: Frontend part 2.** Node settings, run button, executions page, If node
