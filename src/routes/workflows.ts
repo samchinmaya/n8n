@@ -154,5 +154,3 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
     }
     return result;
   },{params:type({id:"string.uuid"}),body:type("object")})
-
-  .patch('/:id/cron')
