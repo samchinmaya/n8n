@@ -5,15 +5,16 @@ import { db } from "../db/index.ts";
 import { execution, workflow } from "../db/schema/index.ts";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { apiError } from "../lib/ApiError.ts";
-import { runWorkFlow } from "../engine/runWorkFlow.ts";
 import { startExecution } from "../engine/startExecution.ts";
 const TEST_USER_ID = "test-user"; // until real login on Day 5
+
 
 const CreateWorkFlowBody = type({
   name: "string>0",
   "nodes?": WorkflowNode.array(),
   "edges?": WorkflowEdge.array(),
 })
+
 
 const UpdateWorkFlowBody = type({
   "+":"delete",
@@ -22,6 +23,8 @@ const UpdateWorkFlowBody = type({
   "edges?": WorkflowEdge.array(),
   "active?": "boolean",
 })
+
+
 export const workflowRoutes = new Elysia({ prefix: "/workflows" })
   .get("/", async () => {
     const workflows = await db
@@ -144,3 +147,5 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
     }
     return result;
   },{params:type({id:"string.uuid"}),body:type("object")})
+
+  .patch('/:id/cron')
