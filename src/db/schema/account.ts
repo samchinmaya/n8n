@@ -1,7 +1,5 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { user } from "./user.ts";
-import { getAccessToken } from "better-auth/api";
-import { refreshAccessToken } from "better-auth";
 
 export const account = pgTable("accounts", {
   id: text("id").primaryKey(),
