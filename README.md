@@ -48,6 +48,8 @@ You connect **nodes** (boxes) with **edges** (arrows) on a canvas. A **trigger**
 erDiagram
     users ||--o{ workflows : owns
     users ||--o{ credentials : owns
+    users ||--o{ sessions : "logged in as"
+    users ||--o{ accounts : "signs in with"
     workflows ||--o{ executions : "runs as"
 
     users {
@@ -88,6 +90,27 @@ erDiagram
         timestamp created_at
         timestamp finished_at
     }
+    sessions {
+        text id PK
+        text user_id FK
+        text token UK
+        timestamp expires_at
+        text ip_address
+        text user_agent
+    }
+    accounts {
+        text id PK
+        text user_id FK
+        text account_id
+        text provider_id
+        text password "hashed"
+    }
+    verifications {
+        text id PK
+        text identifier
+        text value
+        timestamp expires_at
+    }
 ```
 
 | Table | What it stores |
@@ -96,12 +119,15 @@ erDiagram
 | `workflows` | one automation: name, on/off switch, and the canvas (`nodes` + `edges` as JSON) |
 | `credentials` | saved API keys for nodes, encrypted |
 | `executions` | one row per run: what started it, its status, each node's output, and any error |
+| `sessions` | one row per logged-in browser/device; its `token` is the login cookie (better-auth) |
+| `accounts` | how a user signs in; for email/password this holds the hashed password (better-auth) |
+| `verifications` | short-lived codes such as email verification or password reset (better-auth) |
 
 **Enums**
 - `execution_status`: `pending` → `running` → `completed` / `failed`
 - `trigger_mode`: `manual` | `webhook` | `cron`
 
-Deleting a user cascades to their workflows and credentials, and deleting a workflow cascades to its executions.
+Deleting a user cascades to their workflows, credentials, sessions and accounts, and deleting a workflow cascades to its executions.
 
 ### What a workflow looks like in JSON
 
@@ -136,6 +162,9 @@ n8n/
 │   │       ├── workflow.ts
 │   │       ├── credential.ts
 │   │       ├── execution.ts
+│   │       ├── session.ts     # better-auth tables
+│   │       ├── account.ts
+│   │       ├── verification.ts
 │   │       └── index.ts      # re-exports all tables
 │   ├── types/
 │   │   └── workflow.ts       # ArkType: WorkflowNode, WorkflowEdge
@@ -153,6 +182,9 @@ n8n/
 │   ├── routes/
 │   │   ├── workflows.ts       # workflow CRUD, run, webhook, executions per workflow
 │   │   └── executions.ts      # latest executions, one execution by id
+│   ├── auth/
+│   │   ├── index.ts           # better-auth config: Drizzle adapter, email/password
+│   │   └── plugin.ts          # Elysia plugin: mounts /api/auth/*, adds the `auth: true` route option
 │   ├── lib/
 │   │   ├── ApiError.ts        # consistent JSON error responses
 │   │   └── ApiResponse.ts
@@ -163,7 +195,7 @@ n8n/
 └── drizzle.config.ts
 ```
 
-Planned: `src/auth/` and `src/web/`.
+Planned: `src/web/` (the React Flow editor).
 
 ---
 
@@ -185,8 +217,10 @@ Create a `.env` file in the project root:
 ```env
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 PORT=3000
+BETTER_AUTH_SECRET=   # a long random string: openssl rand -base64 32
+BETTER_AUTH_URL=http://localhost:3000
 ```
-Bun loads `.env` automatically.
+Bun loads `.env` automatically. Never commit `.env`.
 
 ### 3. Create the database tables
 ```bash
@@ -220,6 +254,10 @@ Interactive docs (Swagger): **http://localhost:3000/openapi**
 | Method | Route | What it does |
 |---|---|---|
 | `GET` | `/health` | health check |
+| `POST` | `/api/auth/sign-up/email` | create an account (`name`, `email`, `password`) |
+| `POST` | `/api/auth/sign-in/email` | log in; sets the session cookie |
+| `GET` | `/api/auth/get-session` | who is logged in (from the cookie) |
+| `POST` | `/api/auth/sign-out` | log out |
 | `GET` | `/workflows` | list workflows |
 | `POST` | `/workflows` | create a workflow |
 | `GET` | `/workflows/:id` | get one workflow |
@@ -230,6 +268,8 @@ Interactive docs (Swagger): **http://localhost:3000/openapi**
 | `GET` | `/workflows/:id/executions` | a workflow's runs, newest first |
 | `GET` | `/executions` | the latest 20 runs |
 | `GET` | `/executions/:id` | one run: status, each node's output, error |
+
+> 🚧 The workflow and execution routes still use a fixed test user. Protecting them with the logged-in user (`auth: true`) is the next step of Day 5.
 
 Every run is saved in `executions` with its trigger mode (`manual`, `webhook`, `cron`), status, per-node output and error.
 
@@ -249,6 +289,9 @@ Active schedules are reloaded when the server starts.
 - [x] **Day 3: API.** Elysia routes for workflows and executions, Swagger docs, consistent API responses and errors
 - [x] **Day 4: Triggers.** Webhook and cron triggers
 - [ ] **Day 5: Auth + credentials.** better-auth, encrypted API keys, per-user data
+  - [x] better-auth tables, email/password sign-up and login, sessions, Elysia auth plugin
+  - [ ] protect workflow and execution routes per user
+  - [ ] encrypted credentials
 - [ ] **Day 6: Frontend part 1.** React Flow editor, workflow list, save and load
 - [ ] **Day 7: Frontend part 2.** Node settings, run button, executions page, If node
 - [ ] **Day 8: Deploy.** Docker, AWS EC2, Caddy (HTTPS), GitHub Actions CI/CD
