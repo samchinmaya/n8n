@@ -37,15 +37,14 @@ export function scheduleWorkflow(wf: WorkflowRow) {
     jobs.set(wf.id, job);
 
   } catch (err) {
-
+    console.error("invalid cron expression for",wf.id,err)
   }
 }
-export async function loadSchedules(wf:WorkflowRow) {
+export async function loadSchedules() {
   const found = await db
     .select()
     .from(workflow)
     .where(eq(workflow.active,true))
-  for (const wf of list) scheduleWorkflow(wf);
-  console.log("Scheduled",list.length,"active workflows")
-
+  for (const wf of found) scheduleWorkflow(wf);
+  console.log("Scheduled",found.length,"active workflows")
 }
