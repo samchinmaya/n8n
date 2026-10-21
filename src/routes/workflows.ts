@@ -7,8 +7,7 @@ import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
 import { apiError } from "../lib/ApiError.ts";
 import { startExecution } from "../engine/startExecution.ts";
 import { scheduleWorkflow, unscheduleWorkflow } from "../engine/cronManager.ts";
-const TEST_USER_ID = "test-user"; // until real login on Day 5
-
+import { authPlugin } from "../auth/plugin.ts";
 
 const CreateWorkFlowBody = type({
   name: "string>0",
@@ -27,33 +26,34 @@ const UpdateWorkFlowBody = type({
 
 
 export const workflowRoutes = new Elysia({ prefix: "/workflows" })
-  .get("/", async () => {
+  .use(authPlugin)
+  .get("/", async ({user}) => {
     const workflows = await db
       .select()
       .from(workflow)
-      .where(eq(workflow.userId, TEST_USER_ID))
+      .where(eq(workflow.userId, user.id))
     return workflows;
-  })
+  },{auth:true})
   .get("/:id",
-    async ({ params, set }) => {
+    async ({ params, set ,user}) => {
       const [found] = await db
         .select()
         .from(workflow)
-        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
+        .where(and(eq(workflow.userId, user.id), eq(workflow.id, params.id)))
       if (!found) {
         set.status = 404;
         return apiError("Workflow not found", 404);
       }
       return found;
     },
-    { params: type({ id: "string.uuid" }) }
+    { auth: true, params: type({ id: "string.uuid" },) }
   )
   .patch("/:id",
-    async ({ params, body, set }) => {
+    async ({ params, body, set ,user}) => {
       const [updated] = await db
         .update(workflow)
         .set({ ...body, updatedAt: new Date() })
-        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
+        .where(and(eq(workflow.userId, user.id), eq(workflow.id, params.id)))
         .returning();
       if (!updated) {
         set.status = 404;
@@ -66,14 +66,14 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       }
       return updated;
     },
-    { params: type({ id: "string.uuid" }), body: UpdateWorkFlowBody }
+    { auth: true, params: type({ id: "string.uuid" }), body: UpdateWorkFlowBody }
 
   )
   .delete("/:id",
-    async ({ params, set }) => {
+    async ({ params, set ,user}) => {
       const [deleted] = await db
         .delete(workflow)
-        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
+        .where(and(eq(workflow.userId, user.id), eq(workflow.id, params.id)))
         .returning();
       if (!deleted) {
         set.status = 404;
@@ -82,14 +82,15 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       unscheduleWorkflow(deleted.id)
       return deleted;
     },
-    { params: type({ id: "string.uuid" }) }
+    { auth: true, params: type({ id: "string.uuid" },) }
+
   )
   .post("/:id/run",
-    async ({ params, set }) => {
+    async ({ params, set,user }) => {
       const [found] = await db
         .select()
         .from(workflow)
-        .where(and(eq(workflow.userId, TEST_USER_ID), eq(workflow.id, params.id)))
+        .where(and(eq(workflow.userId, user.id), eq(workflow.id, params.id)))
         .limit(1);
       if (!found) {
         set.status = 404;
@@ -98,14 +99,15 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       const result = await startExecution(found as any, "manual");
       return result;
     },
-    { params: type({ id: "string.uuid" }) }
+    { auth: true, params: type({ id: "string.uuid" },) }
+
   )
   .post("/",
-    async ({ body, set }) => {
+    async ({ body, set ,user}) => {
       const [created] = await db
         .insert(workflow)
         .values({
-          userId: TEST_USER_ID,
+          userId: user.id,
           name: body.name,
           nodes: body.nodes ?? [],
           edges: body.edges ?? [],
@@ -114,30 +116,32 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       set.status = 201;
       return created;
     },
-    { body: CreateWorkFlowBody }
+    { auth: true, body: CreateWorkFlowBody }
   )
-  .get('/:id/executions', async ({params,set }) => {
+  .get('/:id/executions', async ({ params, set,user }) => {
     const [found] = await db
       .select()
       .from(workflow)
-      .where(and(eq(workflow.userId,TEST_USER_ID),eq(workflow.id,params.id)))
+      .where(and(eq(workflow.userId, user.id), eq(workflow.id, params.id)))
       .limit(1)
     if (!found) {
       set.status = 404;
-      return apiError("Workflow not found",404)
+      return apiError("Workflow not found", 404)
     }
     const executions = await db
       .select()
       .from(execution)
-      .where(eq(execution.workflowId,found.id))
+      .where(eq(execution.workflowId, found.id))
       .orderBy(desc(execution.createdAt))//newest in the top
     return executions;
-  }, { params: type({ id: "string.uuid" }) })
+  },
+    { auth: true, params: type({ id: "string.uuid" })
+ })
   .post('/:id/webhook', async ({params,set,body}) => {
     const [found] = await db
       .select()
       .from(workflow)
-      .where(and(eq(workflow.userId,TEST_USER_ID),eq(workflow.id,params.id)))
+      .where(eq(workflow.id,params.id))
       .limit(1)
     if (!found) {
       set.status = 404;
