@@ -1,27 +1,32 @@
-import Elysia from "elysia";
-import { eq,and ,desc} from "drizzle-orm"
+import { Elysia } from "elysia";
+import { eq,and ,desc, getTableColumns} from "drizzle-orm"
 import { type } from "arktype";
-import {execution } from "../db/schema/index.ts"
+import {execution, workflow } from "../db/schema/index.ts"
 import { apiError } from "../lib/ApiError.ts"
 import { db } from "../db/index.ts";
+import { authPlugin } from "../auth/plugin.ts";
+
 export const executionRoutes = new Elysia({ prefix: "/executions" })
-  .get('/', async () => {
+  .use(authPlugin)
+  .get('/', async ({user}) => {
     const Execfound = await db
-      .select()
+      .select({...getTableColumns(execution)})
       .from(execution)
+      .innerJoin(workflow,eq(execution.workflowId,workflow.id))
+      .where(eq(workflow.userId,user.id))
       .orderBy(desc(execution.createdAt))
       .limit(20)
     return Execfound
-  })
-  .get('/:id', async ({params,set}) => {
+  },{auth:true})
+  .get('/:id', async ({params,set,user}) => {
     const [IdFound] = await db
-      .select()
+      .select({...getTableColumns(execution)})
       .from(execution)
-      .where(eq(execution.id, params.id))
-
+      .where(and(eq(execution.id, params.id),eq(workflow.userId,user.id)))
+      .limit(1)
     if (!IdFound) {
       set.status = 404
-      return apiError("Couldn't found the execution",404)
+      return apiError("Execution not found",404)
     }
     return IdFound;
-  }, { params: type({ id: "string.uuid" }) })
+  }, { auth:true,params: type({ id: "string.uuid" }) })
