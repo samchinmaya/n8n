@@ -22,6 +22,7 @@ export const executionRoutes = new Elysia({ prefix: "/executions" })
     const [IdFound] = await db
       .select({...getTableColumns(execution)})
       .from(execution)
+      .innerJoin(workflow,eq(execution.workflowId,workflow.id))
       .where(and(eq(execution.id, params.id),eq(workflow.userId,user.id)))
       .limit(1)
     if (!IdFound) {
