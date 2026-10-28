@@ -251,6 +251,8 @@ Then open https://local.drizzle.studio. Safari and Brave block it by default, so
 
 Interactive docs (Swagger): **http://localhost:3000/openapi**
 
+🔒 = needs a logged-in user (session cookie); otherwise it returns `401`.
+
 | Method | Route | What it does |
 |---|---|---|
 | `GET` | `/health` | health check |
@@ -258,18 +260,30 @@ Interactive docs (Swagger): **http://localhost:3000/openapi**
 | `POST` | `/api/auth/sign-in/email` | log in; sets the session cookie |
 | `GET` | `/api/auth/get-session` | who is logged in (from the cookie) |
 | `POST` | `/api/auth/sign-out` | log out |
-| `GET` | `/workflows` | list workflows |
-| `POST` | `/workflows` | create a workflow |
-| `GET` | `/workflows/:id` | get one workflow |
-| `PATCH` | `/workflows/:id` | update a workflow (setting `active` starts/stops its cron schedule) |
-| `DELETE` | `/workflows/:id` | delete a workflow |
-| `POST` | `/workflows/:id/run` | run a workflow now and return the execution |
-| `POST` | `/workflows/:id/webhook` | run an active workflow; the request body becomes the trigger's input |
-| `GET` | `/workflows/:id/executions` | a workflow's runs, newest first |
-| `GET` | `/executions` | the latest 20 runs |
-| `GET` | `/executions/:id` | one run: status, each node's output, error |
+| `GET` | `/workflows` | 🔒 list your workflows |
+| `POST` | `/workflows` | 🔒 create a workflow |
+| `GET` | `/workflows/:id` | 🔒 get one of your workflows |
+| `PATCH` | `/workflows/:id` | 🔒 update a workflow (setting `active` starts/stops its cron schedule) |
+| `DELETE` | `/workflows/:id` | 🔒 delete a workflow |
+| `POST` | `/workflows/:id/run` | 🔒 run a workflow now and return the execution |
+| `POST` | `/workflows/:id/webhook` | public: run an active workflow; the request body becomes the trigger's input |
+| `GET` | `/workflows/:id/executions` | 🔒 a workflow's runs, newest first |
+| `GET` | `/executions` | 🔒 your latest 20 runs |
+| `GET` | `/executions/:id` | 🔒 one of your runs: status, each node's output, error |
 
-> 🚧 The workflow and execution routes still use a fixed test user. Protecting them with the logged-in user (`auth: true`) is the next step of Day 5.
+### Auth
+- Sign up and log in through `/api/auth/*` (better-auth). Logging in sets a session cookie; send it with every request.
+- Each user only sees their own workflows and executions. Another user's workflow or run returns `404`, so it doesn't reveal that it exists.
+- Executions have no `user_id`; they are filtered by joining to their workflow's owner.
+- The webhook is public on purpose, so outside apps can call it. Only `active` workflows run.
+
+Try it with curl:
+```bash
+curl -c cookies.txt -X POST http://localhost:3000/api/auth/sign-up/email \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Sam","email":"sam@test.com","password":"password123"}'
+curl -b cookies.txt http://localhost:3000/workflows
+```
 
 Every run is saved in `executions` with its trigger mode (`manual`, `webhook`, `cron`), status, per-node output and error.
 
@@ -288,10 +302,10 @@ Active schedules are reloaded when the server starts.
 - [x] **Day 2: Nodes + engine.** Node interface, first nodes (Manual Trigger, HTTP Request, Set), node registry, the workflow runner
 - [x] **Day 3: API.** Elysia routes for workflows and executions, Swagger docs, consistent API responses and errors
 - [x] **Day 4: Triggers.** Webhook and cron triggers
-- [ ] **Day 5: Auth + credentials.** better-auth, encrypted API keys, per-user data
+- [x] **Day 5: Auth.** better-auth, per-user data
   - [x] better-auth tables, email/password sign-up and login, sessions, Elysia auth plugin
-  - [ ] protect workflow and execution routes per user
-  - [ ] encrypted credentials
+  - [x] workflow and execution routes protected per user
+  - [ ] encrypted credentials (moved to v2)
 - [ ] **Day 6: Frontend part 1.** React Flow editor, workflow list, save and load
 - [ ] **Day 7: Frontend part 2.** Node settings, run button, executions page, If node
 - [ ] **Day 8: Deploy.** Docker, AWS EC2, Caddy (HTTPS), GitHub Actions CI/CD
