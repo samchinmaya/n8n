@@ -3,8 +3,8 @@ import { auth } from "./index.ts";
 import { apiError } from "../lib/ApiError";
 
 
-export const authPlugin = new Elysia({name:"auth"})
-  .mount(auth.handler)
+export const authPlugin = new Elysia({ name: "auth" })
+  .all("/api/auth/*",({request})=>auth.handler(request))
   .macro({
     auth: {
       async resolve({ status, request: { headers } }) {
