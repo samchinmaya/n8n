@@ -8,7 +8,7 @@ You connect **nodes** (boxes) with **edges** (arrows) on a canvas. A **trigger**
 ⏰ Every 9:00 AM  ──►  🌐 Get weather  ──►  📨 Send to Telegram
 ```
 
-> 🚧 **Work in progress.** I'm building this as a learning project. See the [roadmap](#-roadmap) for what's done.
+> 🚧 **Work in progress.** I'm building this as a learning project. The backend API is almost done, and the frontend is next. See the [roadmap](#-roadmap) for details.
 >
 > Not affiliated with n8n GmbH.
 
@@ -178,19 +178,20 @@ n8n/
 │   ├── engine/
 │   │   ├── runWorkFlow.ts     # runs a workflow: trigger → follow edges → pass data along
 │   │   ├── startExecution.ts  # creates an execution row, runs the workflow, saves completed/failed
-│   │   └── cronManager.ts     # starts/stops cron jobs for active workflows
+│   │   ├── cronManager.ts     # starts/stops cron jobs for active workflows
+│   │   └── validateWorkflow.ts # checks a workflow before saving: known node types, one trigger, valid cron, valid edges
 │   ├── routes/
 │   │   ├── workflows.ts       # workflow CRUD, run, webhook, executions per workflow
 │   │   └── executions.ts      # latest executions, one execution by id
 │   ├── auth/
 │   │   ├── index.ts           # better-auth config: Drizzle adapter, email/password
-│   │   └── plugin.ts          # Elysia plugin: mounts /api/auth/*, adds the `auth: true` route option
+│   │   └── plugin.ts          # Elysia plugin: sends /api/auth/* to better-auth, adds the `auth: true` route option
 │   ├── lib/
 │   │   ├── ApiError.ts        # consistent JSON error responses
-│   │   └── ApiResponse.ts
+│   │   └── ApiResponse.ts     # unused, will be removed
 │   ├── scripts/
 │   │   └── sampleWorkflow.ts  # runs a sample workflow through the engine
-│   └── index.ts               # Elysia server: mounts routes, Swagger, loads cron schedules
+│   └── index.ts               # Elysia server: global error handler, routes, Swagger, loads cron schedules
 ├── drizzle/                  # generated SQL migrations
 └── drizzle.config.ts
 ```
@@ -287,6 +288,20 @@ curl -b cookies.txt http://localhost:3000/workflows
 
 Every run is saved in `executions` with its trigger mode (`manual`, `webhook`, `cron`), status, per-node output and error.
 
+### Errors
+Every error comes back as JSON in the same shape:
+```json
+{ "message": "Workflow not found", "statusCode": 404, "success": false }
+```
+
+| Status | When |
+|---|---|
+| `400` | the request body or params are invalid (for example, an id that isn't a UUID) |
+| `401` | the route needs a login and there's no valid session cookie |
+| `403` | the webhook was called on a workflow that isn't `active` |
+| `404` | the workflow or execution doesn't exist (or belongs to another user), or the route doesn't exist |
+| `500` | something broke on the server; the details are only logged, never sent to the client |
+
 ### Cron schedules
 Start a workflow with a `scheduleTrigger` node whose `params.cron` is a cron expression, then set the workflow to `active: true`:
 ```json
@@ -306,6 +321,12 @@ Active schedules are reloaded when the server starts.
   - [x] better-auth tables, email/password sign-up and login, sessions, Elysia auth plugin
   - [x] workflow and execution routes protected per user
   - [ ] encrypted credentials (moved to v2)
+- [ ] **Backend hardening**
+  - [x] global error handler: one JSON error shape, internal errors hidden
+  - [x] better-auth only handles `/api/auth/*`, so unknown routes return a JSON 404
+  - [ ] validate workflows before saving (node types, one trigger, cron, edges): in progress
+  - [ ] mark runs left `running` after a server restart as `failed`
+  - [ ] type cleanup and removal of unused files
 - [ ] **Day 6: Frontend part 1.** React Flow editor, workflow list, save and load
 - [ ] **Day 7: Frontend part 2.** Node settings, run button, executions page, If node
 - [ ] **Day 8: Deploy.** Docker, AWS EC2, Caddy (HTTPS), GitHub Actions CI/CD
