@@ -8,6 +8,7 @@ import { apiError } from "../lib/ApiError.ts";
 import { startExecution } from "../engine/startExecution.ts";
 import { scheduleWorkflow, unscheduleWorkflow } from "../engine/cronManager.ts";
 import { authPlugin } from "../auth/plugin.ts";
+import { validateWorkflow } from "../engine/validateWorkflow.ts";
 
 const CreateWorkFlowBody = type({
   name: "string>0",
@@ -101,9 +102,14 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
     },
     { auth: true, params: type({ id: "string.uuid" },) }
 
-  )
+)
   .post("/",
-    async ({ body, set ,user}) => {
+    async ({ body, set, user }) => {
+      const error = validateWorkflow(body.nodes ?? [], body.edges ?? []);
+      if (error) {
+        set.status = 400;
+        return apiError(error,400)
+      }
       const [created] = await db
         .insert(workflow)
         .values({

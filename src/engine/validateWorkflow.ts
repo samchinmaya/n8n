@@ -2,7 +2,7 @@ import { Cron } from "croner";
 import { nodeRegistry } from "../nodes";
 import { WorkflowNode, WorkflowEdge } from "../types/workflow";
 
-function validateWorkflow(nodes:WorkflowNode[],edges:WorkflowEdge[]): string | null {
+export function validateWorkflow(nodes:WorkflowNode[],edges:WorkflowEdge[]): string | null {
   for (const node of nodes) {
     if (!nodeRegistry[node.type]) {
       return `Unknown node type:${node.type}`;

@@ -5,7 +5,13 @@ export async function runWorkFlow(nodes: WorkflowNode[], edges: WorkflowEdge[], 
   let input: unknown = triggerInput; // what we pass to the next node
   let current = nodes.find((n) => nodeRegistry[n.type]?.isTrigger); // find the trigger mode and hold that node
   if (!current) throw new Error("No Trigger Node found");
+  const visited = new Set<string>();
+
   while (current) {
+    if (visited.has(current.id)) {
+      throw new Error(`Workflow has a loop:node"${current.name}"`)
+    }
+    visited.add(current.id);
     const definition = nodeRegistry[current.type];
     if (!definition) {
       throw new Error(`Node type "${current.type}" is not registered`)
