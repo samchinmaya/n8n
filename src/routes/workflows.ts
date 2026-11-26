@@ -9,6 +9,7 @@ import { startExecution } from "../engine/startExecution.ts";
 import { scheduleWorkflow, unscheduleWorkflow } from "../engine/cronManager.ts";
 import { authPlugin } from "../auth/plugin.ts";
 import { validateWorkflow } from "../engine/validateWorkflow.ts";
+import { errorToResponse } from "elysia/adapter/web-standard/handler";
 
 const CreateWorkFlowBody = type({
   name: "string>0",
@@ -50,7 +51,20 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
     { auth: true, params: type({ id: "string.uuid" },) }
   )
   .patch("/:id",
-    async ({ params, body, set ,user}) => {
+    async ({ params, body, set, user }) => {
+      const [prevDb] = await db
+        .select()
+        .from(workflow)
+        .where(and(eq(workflow.userId, user.id), eq(workflow.id, params.id)))
+      if (!prevDb) {
+        set.status = 404;
+        return apiError("workflow not found!! ",404)
+      }
+      const error = validateWorkflow(body.nodes ?? prevDb.nodes, body.edges ?? prevDb.edges);
+      if (error) {
+        set.status = 400;
+        return apiError(error,400)
+      }
       const [updated] = await db
         .update(workflow)
         .set({ ...body, updatedAt: new Date() })
