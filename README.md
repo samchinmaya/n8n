@@ -324,9 +324,13 @@ Active schedules are reloaded when the server starts.
 - [ ] **Backend hardening**
   - [x] global error handler: one JSON error shape, internal errors hidden
   - [x] better-auth only handles `/api/auth/*`, so unknown routes return a JSON 404
-  - [ ] validate workflows before saving (node types, one trigger, cron, edges): in progress
+  - [x] validate workflows on create (node types, one trigger, cron, edges)
+  - [x] loop guard: a workflow whose edges form a circle ends as `failed` instead of running forever
+  - [ ] **next:** derive the `TriggerMode` type in `startExecution.ts` from the `trigger_mode` pgEnum instead of repeating the three values by hand
+  - [ ] validate workflows on edit (PATCH)
+  - [ ] pass the webhook body through the trigger node to the next node
   - [ ] mark runs left `running` after a server restart as `failed`
-  - [ ] type cleanup and removal of unused files
+  - [ ] type cleanup (`WorkflowRow` from the table type, remove `as any`) and removal of unused files
 - [ ] **Day 6: Frontend part 1.** React Flow editor, workflow list, save and load
 - [ ] **Day 7: Frontend part 2.** Node settings, run button, executions page, If node
 - [ ] **Day 8: Deploy.** Docker, AWS EC2, Caddy (HTTPS), GitHub Actions CI/CD
