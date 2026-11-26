@@ -1,10 +1,8 @@
 import { db } from "../db/index.ts";
-import { execution } from "../db/schema/index.ts";
+import { execution, triggerMode } from "../db/schema/index.ts";
 import { eq } from "drizzle-orm";
 import { runWorkFlow } from "./runWorkFlow.ts";
 import type { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
-
-type TriggerMode = "manual" | "webhook" | "cron";
 
 export interface WorkflowRow {
   id: string;
@@ -19,7 +17,7 @@ export interface WorkflowRow {
 
 export async function startExecution(
   workflow: WorkflowRow,
-  mode: TriggerMode,
+  mode: typeof triggerMode.enumValues[any],
   triggerInput?: unknown,
 ) {
   const [created] = await db
