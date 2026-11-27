@@ -146,57 +146,67 @@ Deleting a user cascades to their workflows, credentials, sessions and accounts,
 }
 ```
 
-The shapes of `nodes` and `edges` are defined once with ArkType in [`src/types/workflow.ts`](src/types/workflow.ts). That one definition provides both runtime validation and the TypeScript types.
+The shapes of `nodes` and `edges` are defined once with ArkType in [`packages/types/src/workflow.ts`](packages/types/src/workflow.ts) (imported as `@n8n/types`). That one definition provides both runtime validation and the TypeScript types.
 
 ---
 
 ## 📁 Project structure
 
+This is a Turborepo monorepo with Bun workspaces.
+
 ```
 n8n/
-├── src/
-│   ├── db/
-│   │   ├── index.ts          # Drizzle connection (Bun SQL → Postgres)
-│   │   └── schema/           # one file per table
-│   │       ├── user.ts
-│   │       ├── workflow.ts
-│   │       ├── credential.ts
-│   │       ├── execution.ts
-│   │       ├── session.ts     # better-auth tables
-│   │       ├── account.ts
-│   │       ├── verification.ts
-│   │       └── index.ts      # re-exports all tables
-│   ├── types/
-│   │   └── workflow.ts       # ArkType: WorkflowNode, WorkflowEdge
-│   ├── nodes/
-│   │   ├── types.ts           # NodeContext + NodeDefinition (the shape every node follows)
-│   │   ├── manualTrigger.ts   # starts a workflow by hand (/run) or from a webhook
-│   │   ├── scheduleTrigger.ts # starts a workflow on a cron schedule
-│   │   ├── httpRequest.ts     # calls a URL and returns the JSON response
-│   │   ├── set.ts             # adds or replaces one field in the data
-│   │   └── index.ts           # node registry: type name → node code
-│   ├── engine/
-│   │   ├── runWorkFlow.ts     # runs a workflow: trigger → follow edges → pass data along
-│   │   ├── startExecution.ts  # creates an execution row, runs the workflow, saves completed/failed
-│   │   ├── cronManager.ts     # starts/stops cron jobs for active workflows
-│   │   └── validateWorkflow.ts # checks a workflow before saving: known node types, one trigger, valid cron, valid edges
-│   ├── routes/
-│   │   ├── workflows.ts       # workflow CRUD, run, webhook, executions per workflow
-│   │   └── executions.ts      # latest executions, one execution by id
-│   ├── auth/
-│   │   ├── index.ts           # better-auth config: Drizzle adapter, email/password
-│   │   └── plugin.ts          # Elysia plugin: sends /api/auth/* to better-auth, adds the `auth: true` route option
-│   ├── lib/
-│   │   ├── ApiError.ts        # consistent JSON error responses
-│   │   └── ApiResponse.ts     # unused, will be removed
-│   ├── scripts/
-│   │   └── sampleWorkflow.ts  # runs a sample workflow through the engine
-│   └── index.ts               # Elysia server: global error handler, routes, Swagger, loads cron schedules
-├── drizzle/                  # generated SQL migrations
-└── drizzle.config.ts
+├── package.json              # workspaces + turbo scripts (dev, check-types, build)
+├── turbo.json                # task pipeline
+├── tsconfig.base.json        # shared TypeScript settings
+├── apps/
+│   └── server/               # the API (Elysia)
+│       ├── package.json      # server deps + db:* scripts
+│       ├── .env              # not committed
+│       ├── src/
+│       │   ├── db/
+│       │   │   ├── index.ts          # Drizzle connection (Bun SQL → Postgres)
+│       │   │   └── schema/           # one file per table
+│       │   │       ├── user.ts
+│       │   │       ├── workflow.ts
+│       │   │       ├── credential.ts
+│       │   │       ├── execution.ts
+│       │   │       ├── session.ts     # better-auth tables
+│       │   │       ├── account.ts
+│       │   │       ├── verification.ts
+│       │   │       └── index.ts      # re-exports all tables
+│       │   ├── nodes/
+│       │   │   ├── types.ts           # NodeContext + NodeDefinition (the shape every node follows)
+│       │   │   ├── manualTrigger.ts   # starts a workflow by hand (/run) or from a webhook
+│       │   │   ├── scheduleTrigger.ts # starts a workflow on a cron schedule
+│       │   │   ├── httpRequest.ts     # calls a URL and returns the JSON response
+│       │   │   ├── set.ts             # adds or replaces one field in the data
+│       │   │   └── index.ts           # node registry: type name → node code
+│       │   ├── engine/
+│       │   │   ├── runWorkFlow.ts     # runs a workflow: trigger → follow edges → pass data along
+│       │   │   ├── startExecution.ts  # creates an execution row, runs the workflow, saves completed/failed
+│       │   │   ├── cronManager.ts     # starts/stops cron jobs for active workflows
+│       │   │   └── validateWorkflow.ts # checks a workflow before saving: known node types, one trigger, valid cron, valid edges
+│       │   ├── routes/
+│       │   │   ├── workflows.ts       # workflow CRUD, run, webhook, executions per workflow
+│       │   │   └── executions.ts      # latest executions, one execution by id
+│       │   ├── auth/
+│       │   │   ├── index.ts           # better-auth config: Drizzle adapter, email/password
+│       │   │   └── plugin.ts          # Elysia plugin: sends /api/auth/* to better-auth, adds the `auth: true` route option
+│       │   ├── lib/
+│       │   │   ├── ApiError.ts        # consistent JSON error responses
+│       │   │   └── ApiResponse.ts     # unused, will be removed
+│       │   ├── scripts/
+│       │   │   └── sampleWorkflow.ts  # runs a sample workflow through the engine
+│       │   └── index.ts               # Elysia server: global error handler, routes, Swagger, loads cron schedules
+│       ├── drizzle/                  # generated SQL migrations
+│       └── drizzle.config.ts
+└── packages/
+    └── types/                # @n8n/types: ArkType WorkflowNode, WorkflowEdge (shared)
+        └── src/workflow.ts
 ```
 
-Planned: `src/web/` (the React Flow editor).
+Planned: `apps/web/` (the React Flow editor), importing the same `@n8n/types`.
 
 ---
 
@@ -210,11 +220,11 @@ Planned: `src/web/` (the React Flow editor).
 ```bash
 git clone https://github.com/samchinmaya/n8n.git
 cd n8n
-bun install
+bun install          # from the root: installs every workspace
 ```
 
 ### 2. Environment variables
-Create a `.env` file in the project root:
+Create `apps/server/.env` (Bun loads `.env` from the folder a command runs in, and Turborepo runs the server inside `apps/server`):
 ```env
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 PORT=3000
@@ -225,11 +235,13 @@ Bun loads `.env` automatically. Never commit `.env`.
 
 ### 3. Create the database tables
 ```bash
+cd apps/server
 bun run db:migrate
 ```
 
 ### 4. Browse the database (optional)
 ```bash
+cd apps/server
 bun run db:studio
 ```
 Then open https://local.drizzle.studio. Safari and Brave block it by default, so use Chrome/Firefox or turn off Brave Shields for that site.
@@ -238,13 +250,14 @@ Then open https://local.drizzle.studio. Safari and Brave block it by default, so
 
 ## 📜 Scripts
 
-| Command | What it does |
-|---|---|
-| `bun run db:generate` | create a SQL migration from schema changes |
-| `bun run db:migrate` | apply migrations to the database |
-| `bun run db:studio` | open Drizzle Studio to browse tables |
-| `bun run dev` | start the API server with auto-reload (http://localhost:3000) |
-| `bun run src/scripts/sampleWorkflow.ts` | run the sample workflow through the engine and print each node's output |
+| Command | Run in | What it does |
+|---|---|---|
+| `bun run dev` | root | start every app with auto-reload (server: http://localhost:3000) |
+| `bun run check-types` | root | type-check every workspace |
+| `bun run db:generate` | `apps/server` | create a SQL migration from schema changes |
+| `bun run db:migrate` | `apps/server` | apply migrations to the database |
+| `bun run db:studio` | `apps/server` | open Drizzle Studio to browse tables |
+| `bun run src/scripts/sampleWorkflow.ts` | `apps/server` | run the sample workflow through the engine and print each node's output |
 
 ---
 

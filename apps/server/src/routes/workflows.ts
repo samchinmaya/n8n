@@ -3,7 +3,7 @@ import { type } from "arktype";
 import { and,eq,desc } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { execution, workflow } from "../db/schema/index.ts";
-import { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
+import { WorkflowNode, WorkflowEdge } from "@n8n/types";
 import { apiError } from "../lib/ApiError.ts";
 import { startExecution } from "../engine/startExecution.ts";
 import { scheduleWorkflow, unscheduleWorkflow } from "../engine/cronManager.ts";

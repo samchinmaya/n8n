@@ -2,7 +2,7 @@ import { db } from "../db/index.ts";
 import { execution, triggerMode } from "../db/schema/index.ts";
 import { eq } from "drizzle-orm";
 import { runWorkFlow } from "./runWorkFlow.ts";
-import type { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
+import type { WorkflowNode, WorkflowEdge } from "@n8n/types";
 
 export interface WorkflowRow {
   id: string;
