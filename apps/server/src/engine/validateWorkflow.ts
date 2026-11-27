@@ -1,6 +1,6 @@
 import { Cron } from "croner";
 import { nodeRegistry } from "../nodes";
-import { WorkflowNode, WorkflowEdge } from "../types/workflow";
+import { WorkflowNode, WorkflowEdge } from "@n8n/types";
 
 export function validateWorkflow(nodes:WorkflowNode[],edges:WorkflowEdge[]): string | null {
   for (const node of nodes) {

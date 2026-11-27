@@ -1,0 +1,14 @@
+{
+  "name": "@n8n/types",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/workflow.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "arktype": "^2.2.7"
+  }
+}

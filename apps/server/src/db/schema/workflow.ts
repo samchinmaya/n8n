@@ -1,6 +1,6 @@
 import { jsonb, pgTable, text, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
 import { user } from "./user.ts";
-import type { WorkflowNode, WorkflowEdge } from "../../types/workflow.ts";
+import type { WorkflowNode, WorkflowEdge } from "@n8n/types";
 
 export const workflow = pgTable("workflows", {
   id: uuid("id").primaryKey().defaultRandom(),

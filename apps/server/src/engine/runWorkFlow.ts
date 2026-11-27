@@ -1,4 +1,4 @@
-import type { WorkflowNode, WorkflowEdge } from "../types/workflow.ts";
+import type { WorkflowNode, WorkflowEdge } from "@n8n/types";
 import { nodeRegistry } from "../nodes/index.ts";
 export async function runWorkFlow(nodes: WorkflowNode[], edges: WorkflowEdge[], triggerInput?: unknown) {
   const outputs: Record<string, unknown> = {}; // will hold the output of each node
