@@ -194,8 +194,7 @@ n8n/
 │       │   │   ├── index.ts           # better-auth config: Drizzle adapter, email/password
 │       │   │   └── plugin.ts          # Elysia plugin: sends /api/auth/* to better-auth, adds the `auth: true` route option
 │       │   ├── lib/
-│       │   │   ├── ApiError.ts        # consistent JSON error responses
-│       │   │   └── ApiResponse.ts     # unused, will be removed
+│       │   │   └── ApiError.ts        # consistent JSON error responses
 │       │   ├── scripts/
 │       │   │   └── sampleWorkflow.ts  # runs a sample workflow through the engine
 │       │   └── index.ts               # Elysia server: global error handler, routes, Swagger, loads cron schedules

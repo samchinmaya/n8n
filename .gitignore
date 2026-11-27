@@ -1,6 +1,5 @@
 # dependencies (bun install)
 node_modules
-cookies.txt
 # output
 out
 dist
@@ -32,9 +31,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# curl session cookies used for manual API testing
 cookies.txt
-bob.txt
-bob.txt
 bob.txt
 
 # turborepo
