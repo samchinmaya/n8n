@@ -3,7 +3,8 @@ export const manualTrigger: NodeDefinition = {
   type: "manualTrigger",
   name: "Manual Trigger",
   isTrigger: true,
-  execute: async () => {
-    return { startedAt: new Date().toISOString() };
+  execute: async (ctx) => {
+    const data = (ctx.input ?? {}) as Record<string, unknown>;
+    return { ...data , startedAt: new Date().toISOString() };
   },
-};
+}
