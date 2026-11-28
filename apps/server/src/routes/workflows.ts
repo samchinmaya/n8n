@@ -111,7 +111,7 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
         set.status = 404;
         return apiError("Workflow not found", 404);
       }
-      const result = await startExecution(found as any, "manual");
+      const result = await startExecution(found , "manual");
       return result;
     },
     { auth: true, params: type({ id: "string.uuid" },) }
@@ -172,7 +172,7 @@ export const workflowRoutes = new Elysia({ prefix: "/workflows" })
       return apiError("workflow is not active",403)
 
     }
-    const result = await startExecution(found as any, "webhook", body)
+    const result = await startExecution(found, "webhook", body)
     if (!result) {
       return apiError("execution not found",404)
     }
