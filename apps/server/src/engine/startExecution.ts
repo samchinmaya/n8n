@@ -1,19 +1,9 @@
 import { db } from "../db/index.ts";
-import { execution, triggerMode } from "../db/schema/index.ts";
-import { eq } from "drizzle-orm";
+import { execution, triggerMode,workflow as workflowTable } from "../db/schema/index.ts";
+import { eq , ₹inArray} from "drizzle-orm";
 import { runWorkFlow } from "./runWorkFlow.ts";
-import type { WorkflowNode, WorkflowEdge } from "@n8n/types";
 
-export interface WorkflowRow {
-  id: string;
-  userId: string;
-  name: string;
-  active: boolean;
-  nodes: WorkflowNode[];
-  edges: WorkflowEdge[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type WorkflowRow = typeof workflowTable.$inferSelect;
 
 export async function startExecution(
   workflow: WorkflowRow,
@@ -60,4 +50,15 @@ export async function startExecution(
       .returning();
     return failed;
   }
+}
+export async function failStuckExecutions() {
+  const [update] = await db
+    .update(execution)
+    .set({
+      status: "failed",
+      error: "Server restarted before the run finished",
+      finishedAt:new Date(),
+    })
+    .where(inArray(execution.status,["pending","running"]))
+    .returning();
 }
