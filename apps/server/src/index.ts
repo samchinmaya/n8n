@@ -5,7 +5,8 @@ import { openapi } from "@elysia/openapi";
 import { loadSchedules } from "./engine/cronManager";
 import { authPlugin } from "./auth/plugin";
 import { apiError } from "./lib/ApiError.ts";
-
+import { failStuckExecutions } from "./engine/startExecution.ts";
+await failStuckExecutions();
 const app = new Elysia()
   .onError(({ code, error, set }) => {
     if (code === "NOT_FOUND") {
@@ -27,7 +28,6 @@ const app = new Elysia()
   .use(workflowRoutes)
   .listen(Number(process.env.PORT)||3000);
 console.log(`Server running on port ${Number(process.env.PORT) || 3000}`)
-
 loadSchedules();
 
 export { app };
